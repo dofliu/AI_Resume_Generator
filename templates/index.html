@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI履歷生成器 - 應徵資料與學習歷程</title>
+    <style>
+        body {
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+        }
+        
+        .controls {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .control-group {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .control-section {
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .control-section h3 {
+            margin-top: 0;
+            color: #667eea;
+            font-size: 1.1em;
+        }
+        
+        label {
+            font-weight: bold;
+            color: #555;
+            min-width: 120px;
+        }
+        
+        input, select {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .trait-group {
+            margin-bottom: 10px;
+        }
+        
+        .trait-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 5px;
+        }
+        
+        .trait-option {
+            padding: 5px 12px;
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .trait-option:hover {
+            background: #e0e0e0;
+        }
+        
+        .trait-option.selected {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .document-type-toggle {
+            display: flex;
+            background: #f0f0f0;
+            border-radius: 25px;
+            padding: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .document-type-option {
+            flex: 1;
+            padding: 10px 20px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .document-type-option.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .progress-container {
+            display: none;
+            margin: 20px 0;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .document-preview {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 10px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .document-section {
+            margin: 15px 0;
+        }
+        
+        .document-section h3 {
+            color: #667eea;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 AI履歷生成器 - 應徵資料與學習歷程</h1>
+        
+        <div class="controls">
+            <!-- 文件類型選擇 -->
+            <div class="document-type-toggle">
+                <div class="document-type-option active" data-type="job_application">
+                    💼 求職履歷
+                </div>
+                <div class="document-type-option" data-type="student_portfolio">
+                    🎓 學習歷程
+                </div>
+            </div>
+            
+            <!-- 基本設定 -->
+            <div class="control-section">
+                <h3>📋 基本設定</h3>
+                <div class="control-group">
+                    <label>生成數量：</label>
+                    <input type="number" id="documentCount" value="5" min="1" max="50">
+                </div>
+            </div>
+            
+            <!-- 求職履歷專用設定 -->
+            <div class="control-section" id="jobApplicationSettings">
+                <h3>💼 求職履歷設定</h3>
+                <div class="control-group">
+                    <label>職位類型：</label>
+                    <select id="jobType">
+                        <option value="software">軟體工程師</option>
+                        <option value="marketing">行銷專員</option>
+                        <option value="finance">財務分析師</option>
+                        <option value="hr">人力資源專員</option>
+                        <option value="design">UI/UX設計師</option>
+                        <option value="sales">業務代表</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>公司名稱：</label>
+                    <input type="text" id="companyName" value="科技創新股份有限公司">
+                </div>
+                <div class="control-group">
+                    <label>教育程度：</label>
+                    <select id="educationLevel">
+                        <option value="學士">學士</option>
+                        <option value="碩士">碩士</option>
+                        <option value="博士">博士</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- 學習歷程專用設定 -->
+            <div class="control-section hidden" id="studentPortfolioSettings">
+                <h3>🎓 學習歷程設定</h3>
+                <div class="control-group">
+                    <label>目標科系：</label>
+                    <select id="targetMajor">
+                        <option value="science">理學院 (物理、化學、生物)</option>
+                        <option value="engineering">工學院 (機械、電機、化工)</option>
+                        <option value="medical">醫學院 (醫學、牙醫、藥學)</option>
+                        <option value="business">商學院 (企管、會計、經濟)</option>
+                        <option value="liberal_arts">文學院 (中文、外語、歷史)</option>
+                        <option value="arts">藝術學院 (美術、音樂、設計)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- 個人特質設定 -->
+            <div class="control-section">
+                <h3>🎯 個人特質設定</h3>
+                <p style="color: #666; font-size: 14px;">選擇個人特質，或留空讓系統隨機選擇</p>
+                
+                {% for category, traits in personality_traits.items() %}
+                <div class="trait-group">
+                    <label>{{ category }}：</label>
+                    <div class="trait-options" data-category="{{ category }}">
+                        {% for trait in traits %}
+                        <div class="trait-option" data-trait="{{ trait }}">{{ trait }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- 操作按鈕 -->
+            <div class="control-group">
+                <button class="btn" onclick="startGeneration()">🚀 生成文件</button>
+                <button class="btn" onclick="downloadAllPDFs()" id="downloadBtn" disabled>📥 下載所有PDF</button>
+                <button class="btn" onclick="clearResults()">🗑️ 清除結果</button>
+                <button class="btn" onclick="randomizeTraits()" style="background: #28a745;">🎲 隨機特質</button>
+            </div>
+        </div>
+        
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p id="progressText">準備中...</p>
+        </div>
+        
+        <div class="stats" id="statsContainer" style="display: none;">
+            <div class="stat-card">
+                <div class="stat-number" id="totalCount">0</div>
+                <div class="stat-label">總文件數</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="aiGenerated">0</div>
+                <div class="stat-label">AI生成數</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="avgLength">0</div>
+                <div class="stat-label">平均字數</div>
+            </div>
+        </div>
+        
+        <div id="previewArea" style="display: none;">
+            <h2>📋 生成的文件預覽</h2>
+            <div id="documentList"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentTaskId = null;
+        let currentDocumentType = 'job_application';
+        
+        // 文件類型切換
+        document.querySelectorAll('.document-type-option').forEach(option => {
+            option.addEventListener('click', function() {
+                // 更新按鈕狀態
+                document.querySelectorAll('.document-type-option').forEach(o => o.classList.remove('active'));
+                this.classList.add('active');
+                
+                // 更新文件類型
+                currentDocumentType = this.dataset.type;
+                
+                // 顯示/隱藏相應設定
+                if (currentDocumentType === 'job_application') {
+                    document.getElementById('jobApplicationSettings').classList.remove('hidden');
+                    document.getElementById('studentPortfolioSettings').classList.add('hidden');
+                } else {
+                    document.getElementById('jobApplicationSettings').classList.add('hidden');
+                    document.getElementById('studentPortfolioSettings').classList.remove('hidden');
+                }
+            });
+        });
+        
+        // 特質選擇
+        document.querySelectorAll('.trait-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const category = this.parentElement.dataset.category;
+                // 清除同類別的其他選擇
+                this.parentElement.querySelectorAll('.trait-option').forEach(o => o.classList.remove('selected'));
+                // 選擇當前選項
+                this.classList.add('selected');
+            });
+        });
+        
+        // 隨機選擇特質
+        function randomizeTraits() {
+            document.querySelectorAll('.trait-options').forEach(group => {
+                const options = group.querySelectorAll('.trait-option');
+                // 清除所有選擇
+                options.forEach(o => o.classList.remove('selected'));
+                // 隨機選擇一個
+                const randomOption = options[Math.floor(Math.random() * options.length)];
+                randomOption.classList.add('selected');
+            });
+        }
+        
+        // 獲取選擇的特質
+        function getSelectedTraits() {
+            const traits = {};
+            document.querySelectorAll('.trait-options').forEach(group => {
+                const category = group.dataset.category;
+                const selected = group.querySelector('.trait-option.selected');
+                if (selected) {
+                    traits[category] = selected.dataset.trait;
+                }
+            });
+            return Object.keys(traits).length > 0 ? traits : null;
+        }
+        
+        async function startGeneration() {
+            const count = parseInt(document.getElementById('documentCount').value);
+            
+            if (count < 1 || count > 50) {
+                alert('請輸入1-50之間的數量');
+                return;
+            }
+            
+            try {
+                // 準備請求數據
+                const requestData = {
+                    count: count,
+                    documentType: currentDocumentType,
+                    personalityTraits: getSelectedTraits()
+                };
+                
+                if (currentDocumentType === 'job_application') {
+                    requestData.jobType = document.getElementById('jobType').value;
+                    requestData.companyName = document.getElementById('companyName').value;
+                    requestData.educationLevel = document.getElementById('educationLevel').value;
+                } else {
+                    requestData.targetMajor = document.getElementById('targetMajor').value;
+                }
+                
+                // 發送生成請求
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    currentTaskId = result.task_id;
+                    startProgressTracking();
+                } else {
+                    alert('錯誤: ' + result.error);
+                }
+                
+            } catch (error) {
+                alert('請求失敗: ' + error.message);
+            }
+        }
+        
+        function startProgressTracking() {
+            document.getElementById('progressContainer').style.display = 'block';
+            document.getElementById('previewArea').style.display = 'none';
+            document.getElementById('statsContainer').style.display = 'none';
+            
+            const interval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/progress/${currentTaskId}`);
+                    const progress = await response.json();
+                    
+                    if (response.ok) {
+                        const percentage = (progress.progress / progress.total) * 100;
+                        document.getElementById('progressFill').style.width = percentage + '%';
+                        document.getElementById('progressText').textContent = progress.message;
+                        
+                        if (progress.status === 'completed') {
+                            clearInterval(interval);
+                            document.getElementById('progressContainer').style.display = 'none';
+                            loadResults();
+                        } else if (progress.status === 'error') {
+                            clearInterval(interval);
+                            alert('生成錯誤: ' + progress.message);
+                            document.getElementById('progressContainer').style.display = 'none';
+                        }
+                    }
+                } catch (error) {
+                    clearInterval(interval);
+                    alert('進度查詢失敗: ' + error.message);
+                }
+            }, 1000);
+        }
+        
+        async function loadResults() {
+            try {
+                // 載入文件列表
+                const documentsResponse = await fetch(`/documents/${currentTaskId}`);
+                const documentsData = await documentsResponse.json();
+                
+                if (documentsResponse.ok) {
+                    displayDocuments(documentsData.documents);
+                }
+                
+                document.getElementById('downloadBtn').disabled = false;
+                
+            } catch (error) {
+                alert('載入結果失敗: ' + error.message);
+            }
+        }
+        
+        function displayDocuments(documents) {
+            const previewArea = document.getElementById('previewArea');
+            const documentList = document.getElementById('documentList');
+            
+            previewArea.style.display = 'block';
+            documentList.innerHTML = '';
+            
+            // 更新統計
+            document.getElementById('statsContainer').style.display = 'grid';
+            document.getElementById('totalCount').textContent = documents.length;
+            document.getElementById('aiGenerated').textContent = documents.length;
+            
+            documents.forEach((document, index) => {
+                const documentDiv = window.document.createElement('div');
+                documentDiv.className = 'document-preview';
+                
+                const basicInfo = document.basic_info;
+                const content = document.content;
+                const traits = document.personality_traits;
+                const docType = document.document_type;
+                
+                const traitsHTML = Object.entries(traits).map(([key, value]) => 
+                    `${key}: ${value}`
+                ).join(' | ');
+                
+                documentDiv.innerHTML = `
+                    <div class="document-header">
+                        <h2>${basicInfo.name} ${docType === 'job_application' ? '(求職履歷)' : '(學習歷程)'}</h2>
+                        <p><strong>聯絡資訊：</strong>${basicInfo.email} | ${basicInfo.phone} | ${basicInfo.city} | ${basicInfo.age}歲</p>
+                        <p><strong>個人特質：</strong>${traitsHTML}</p>
+                    </div>
+                    
+                    ${Object.entries(content).map(([key, value]) => {
+                        const sectionTitles = {
+                            'education': '🎓 學歷背景/學業表現',
+                            'language_skills': '🌍 語言能力',
+                            'experience': '💼 工作經驗/課外活動',
+                            'technical_skills': '🛠️ 專業技能/競賽經驗',
+                            'certificates': '🏆 證照資格/志工服務',
+                            'projects': '🚀 專案經驗/專題研究',
+                            'personality': '👤 個人特質描述',
+                            'vision': '🎯 願景/學習動機'
+                        };
+                        
+                        return `
+                            <div class="document-section">
+                                <h3>${sectionTitles[key] || key}</h3>
+                                <p>${value.replace(/\n/g, '<br>')}</p>
+                            </div>
+                        `;
+                    }).join('')}
+                    
+                    <button class="btn" onclick="downloadSinglePDF(${index})">下載此文件PDF</button>
+                `;
+                
+                documentList.appendChild(documentDiv);
+            });
+        }
+        
+        function downloadSinglePDF(index) {
+            if (!currentTaskId) {
+                alert('請先生成文件');
+                return;
+            }
+            
+            window.open(`/download/${currentTaskId}/${index}`, '_blank');
+        }
+        
+        function downloadAllPDFs() {
+            if (!currentTaskId) {
+                alert('請先生成文件');
+                return;
+            }
+            
+            window.open(`/download_all/${currentTaskId}`, '_blank');
+        }
+        
+        function clearResults() {
+            currentTaskId = null;
+            document.getElementById('previewArea').style.display = 'none';
+            document.getElementById('statsContainer').style.display = 'none';
+            document.getElementById('progressContainer').style.display = 'none';
+            document.getElementById('downloadBtn').disabled = true;
+            document.getElementById('documentList').innerHTML = '';
+        }
+    </script>
+</body>
+</html>
